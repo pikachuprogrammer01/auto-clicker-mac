@@ -2,6 +2,14 @@
 
 Auto Clicker 是一款原生 SwiftUI 菜单栏连点工具。它在任务开始时锁定当前鼠标位置，并按照配置持续发送鼠标事件，不需要坐标输入、脚本、账号或网络服务。
 
+## 界面预览
+
+<p align="center">
+  <img src="docs/images/app-overview.jpg" width="360" alt="Auto Clicker 默认控制面板">
+</p>
+
+控制面板集中展示权限、鼠标按键、点击类型、间隔、次数和全局快捷键。应用窗口关闭后仍会驻留菜单栏，需要时可从菜单栏指针图标重新打开。
+
 ## 功能
 
 - 左键或右键
@@ -25,23 +33,50 @@ Auto Clicker 是一款原生 SwiftUI 菜单栏连点工具。它在任务开始�
 
 项目没有第三方依赖，也不会访问网络。
 
-## 快速开始
+## 下载与使用
 
-在项目目录执行：
+### 1. 下载并打开
 
-```sh
-./scripts/build-app.sh
-open "dist/Auto Clicker.app"
-```
+前往 [Releases](https://github.com/pikachuprogrammer01/auto-clicker-mac/releases/latest)，下载 `Auto-Clicker-v1.0.0-arm64.zip`。解压后双击 `Auto Clicker.app`，应用会打开控制窗口并在菜单栏显示指针图标。
 
-首次启动时，在“系统设置 → 隐私与安全性 → 辅助功能”中允许 Auto Clicker。授权后：
+当前发布附件适用于 Apple Silicon Mac。Intel Mac 可以按照下方开发说明从源码构建本机版本。
 
-1. 选择鼠标按键、点击类型、间隔和次数。
-2. 将鼠标移动到目标位置。
-3. 点击“开始点击”或按 `⌥⌘C`。
-4. 再次按快捷键或点击“停止点击”结束任务。
+### 2. 授予辅助功能权限
 
-双击 App 会显示紧凑控制窗口。关闭窗口不会退出应用，仍可从菜单栏指针图标打开控制面板；面板右上角电源按钮用于完全退出。
+首次启动时，按系统提示打开“系统设置 → 隐私与安全性 → 辅助功能”，允许 Auto Clicker。返回应用后，右上角显示绿色“权限已开启”即表示可以发送鼠标事件；未授权时应用会禁用启动操作并提供“前往系统设置”按钮。
+
+### 3. 配置点击任务
+
+<p align="center">
+  <img src="docs/images/configuration.jpg" width="360" alt="Auto Clicker 右键长按与指定次数配置">
+</p>
+
+示例截图配置了右键长按 750ms、每次操作后等待 500ms，并在完成 100 次后自动停止。各项含义如下：
+
+- **鼠标按键**：选择左键或右键。
+- **点击类型**：单击会连续发送 `mouseDown` 和 `mouseUp`；长按会在两者之间保持指定时间。
+- **点击间隔**：一次操作完成后到下一次操作开始前的等待时间，范围为 `10～60000 ms`。
+- **点击次数**：无限模式持续运行到手动停止；指定次数完成后自动停止。
+
+### 4. 修改全局快捷键（可选）
+
+<p align="center">
+  <img src="docs/images/hotkey-recording.jpg" width="360" alt="Auto Clicker 正在录入全局快捷键">
+</p>
+
+点击当前快捷键后，按钮会显示“请按新组合键”。按下包含 `⌘`、`⌥` 或 `⌃` 的组合键即可保存；按 `Esc` 取消。若组合键被其他应用占用，Auto Clicker 会恢复旧快捷键并提示重新设置。
+
+### 5. 锁定位置并开始
+
+将鼠标移到需要重复点击的位置，然后按全局快捷键，默认是 `⌥⌘C`。应用会在快捷键触发瞬间读取并锁定鼠标位置，之后移动鼠标不会改变本次任务的点击目标。
+
+<p align="center">
+  <img src="docs/images/running-state.jpg" width="360" alt="Auto Clicker 正在运行并显示锁定状态">
+</p>
+
+运行界面会显示已完成次数、位置锁定状态、当前鼠标操作和停止快捷键。再次按同一快捷键，或点击红色“停止点击”按钮，即可立即停止任务。
+
+关闭控制窗口不会退出应用。需要完全退出时，点击面板右上角的电源按钮；应用会先停止当前任务，再结束进程。
 
 ## 开发
 
@@ -82,6 +117,7 @@ scripts/build-app.sh        Release 构建及 Bundle 组装
 scripts/run-checks.sh       核心逻辑检查入口
 docs/ARCHITECTURE.md        架构与线程模型
 docs/RELEASE.md             签名、公证与发布流程
+docs/images/                README 使用流程截图
 Auto_Clicker_PRD_v1.0.md    产品需求与验收标准
 LICENSE                     MIT 许可证与免责声明
 ```
