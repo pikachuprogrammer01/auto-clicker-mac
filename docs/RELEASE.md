@@ -20,7 +20,8 @@ dist/Auto Clicker.app
 1. 使用 SwiftPM 执行 Release 构建。
 2. 创建标准 macOS App Bundle 目录。
 3. 写入 `Support/Info.plist`。
-4. 对 Bundle 进行 ad-hoc 签名。
+4. 将 MIT `LICENSE` 放入 App Bundle 的 Resources 目录。
+5. 对 Bundle 进行 ad-hoc 签名。
 
 ad-hoc 签名只适合本机开发测试，不适合向其他用户分发。脚本构建当前 Mac 的原生架构；通用二进制需要分别构建 `arm64` 和 `x86_64` 后使用 `lipo` 合并。
 

@@ -37,9 +37,10 @@ if [[ -d "$app_path" ]]; then
     /bin/rm -rf "$app_path"
 fi
 
-/bin/mkdir -p "$app_path/Contents/MacOS"
+/bin/mkdir -p "$app_path/Contents/MacOS" "$app_path/Contents/Resources"
 /bin/cp "$binary_directory/AutoClicker" "$app_path/Contents/MacOS/AutoClicker"
 /bin/cp "$project_directory/Support/Info.plist" "$app_path/Contents/Info.plist"
+/bin/cp "$project_directory/LICENSE" "$app_path/Contents/Resources/LICENSE"
 /usr/bin/codesign --force --sign - --timestamp=none "$app_path"
 
 print "Built: $app_path"

@@ -83,6 +83,7 @@ scripts/run-checks.sh       核心逻辑检查入口
 docs/ARCHITECTURE.md        架构与线程模型
 docs/RELEASE.md             签名、公证与发布流程
 Auto_Clicker_PRD_v1.0.md    产品需求与验收标准
+LICENSE                     MIT 许可证与免责声明
 ```
 
 ## 权限与隐私
@@ -100,3 +101,7 @@ Auto_Clicker_PRD_v1.0.md    产品需求与验收标准
 ## 当前边界
 
 MVP 不提供固定坐标、多位置、轨迹录制、键盘宏、脚本、定时任务、OCR、云同步或服务端能力。
+
+## 许可证与免责声明
+
+本项目使用 [MIT License](LICENSE)。软件按“现状”提供，不附带任何明示或默示保证；在适用法律允许的最大范围内，作者或版权持有人不对因软件或软件使用产生的任何索赔、损害或其他责任负责。完整且具有约束力的条款以 `LICENSE` 英文原文为准。
