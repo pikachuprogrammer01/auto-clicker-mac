@@ -27,7 +27,7 @@ ad-hoc 签名只适合本机开发测试，不适合向其他用户分发。脚�
 
 ## GitHub Actions Intel 包
 
-`.github/workflows/build-intel.yml` 使用 `macos-13` Intel runner 原生构建 `x86_64` 安装包。工作流会运行核心检查、构建 App、校验 Mach-O 架构、生成 ZIP 和 SHA-256，并上传 Actions artifact。
+`.github/workflows/build-intel.yml` 使用 `macos-15-intel` Intel runner 原生构建 `x86_64` 安装包。工作流会运行核心检查、构建 App、校验 Mach-O 架构、生成 ZIP 和 SHA-256，并上传 Actions artifact。
 
 - 推送 `v*` 标签：自动构建并将 Intel ZIP 上传到对应的正式 GitHub Release。
 - 手动运行 workflow：不填写 `release_tag` 时只生成 Actions artifact；填写已有或新的标签时，同时上传到该 Release。

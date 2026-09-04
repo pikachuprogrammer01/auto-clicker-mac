@@ -16,9 +16,9 @@ permissions:
 
 jobs:
   build-intel:
-    # macos-13 is the Intel GitHub-hosted runner. Building natively avoids
+    # macos-15-intel is the Intel GitHub-hosted runner. Building natively avoids
     # accidentally shipping an arm64 binary from an Apple Silicon host.
-    runs-on: macos-13
+    runs-on: macos-15-intel
 
     steps:
       - name: Check out source

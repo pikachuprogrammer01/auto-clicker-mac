@@ -39,7 +39,7 @@ Auto Clicker 是一款原生 SwiftUI 菜单栏连点工具。它在每次操作�
 
 前往 [Releases](https://github.com/pikachuprogrammer01/auto-clicker-mac/releases/latest)，按芯片架构下载对应安装包：Apple Silicon 使用 `arm64`，Intel Mac 使用 `intel`。例如 v1.1.0 的 Intel 包为 `Auto-Clicker-v1.1.0-intel.zip`。解压后双击 `Auto Clicker.app`，应用会打开控制窗口并在菜单栏显示指针图标。
 
-Intel 安装包由 GitHub Actions 的 `macos-13` Intel runner 构建；每个 ZIP 都附带同名 `.sha256` 校验文件。
+Intel 安装包由 GitHub Actions 的 `macos-15-intel` runner 构建；每个 ZIP 都附带同名 `.sha256` 校验文件。
 
 ### 2. 授予辅助功能权限
 
