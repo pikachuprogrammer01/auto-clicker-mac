@@ -62,7 +62,7 @@ jobs:
 
           unzip -l "$package_path"
           ditto -x -k "$package_path" "$RUNNER_TEMP/intel-package"
-          codesign --verify --deep --strict "$RUNNER_TEMP/intel-package/$app_path"
+          codesign --verify --deep --strict "$RUNNER_TEMP/intel-package/Auto Clicker.app"
 
       - name: Upload Intel package artifact
         uses: actions/upload-artifact@v4
