@@ -5,6 +5,10 @@ protocol MouseEventPosting {
     func post(type: CGEventType, button: CGMouseButton, at location: CGPoint)
 }
 
+protocol MouseLocationProviding {
+    func currentLocation() -> CGPoint?
+}
+
 struct SystemMouseEventPoster: MouseEventPosting {
     func post(type: CGEventType, button: CGMouseButton, at location: CGPoint) {
         guard let event = CGEvent(
@@ -17,24 +21,39 @@ struct SystemMouseEventPoster: MouseEventPosting {
     }
 }
 
+struct SystemMouseLocationProvider: MouseLocationProviding {
+    func currentLocation() -> CGPoint? {
+        CGEvent(source: nil)?.location
+    }
+}
+
+enum MouseClickEngineResult: Equatable {
+    case completed
+    case locationUnavailable
+}
+
 final class MouseClickEngine: @unchecked Sendable {
     private let condition = NSCondition()
     private let workerQueue = DispatchQueue(label: "com.autoclicker.click-engine", qos: .userInteractive)
     private let poster: MouseEventPosting
+    private let locationProvider: MouseLocationProviding
 
     private var activeRunID: UUID?
     private var currentGroup: DispatchGroup?
 
-    init(poster: MouseEventPosting = SystemMouseEventPoster()) {
+    init(
+        poster: MouseEventPosting = SystemMouseEventPoster(),
+        locationProvider: MouseLocationProviding = SystemMouseLocationProvider()
+    ) {
         self.poster = poster
+        self.locationProvider = locationProvider
     }
 
     func start(
         runID: UUID,
         configuration: ClickConfiguration,
-        location: CGPoint,
         onClick: @escaping (UUID, Int) -> Void,
-        onFinished: @escaping (UUID) -> Void
+        onFinished: @escaping (UUID, MouseClickEngineResult) -> Void
     ) {
         stop()
 
@@ -51,7 +70,6 @@ final class MouseClickEngine: @unchecked Sendable {
             self?.run(
                 id: runID,
                 configuration: configuration,
-                location: location,
                 onClick: onClick,
                 onFinished: onFinished
             )
@@ -77,26 +95,35 @@ final class MouseClickEngine: @unchecked Sendable {
     private func run(
         id: UUID,
         configuration: ClickConfiguration,
-        location: CGPoint,
         onClick: @escaping (UUID, Int) -> Void,
-        onFinished: @escaping (UUID) -> Void
+        onFinished: @escaping (UUID, MouseClickEngineResult) -> Void
     ) {
         var count = 0
-        var finishedNaturally = false
+        var result: MouseClickEngineResult?
 
-        while performClick(id: id, configuration: configuration, location: location) {
+        clickLoop: while true {
+            switch performClick(id: id, configuration: configuration) {
+            case .posted:
+                break
+            case .stopped:
+                break clickLoop
+            case .locationUnavailable:
+                result = .locationUnavailable
+                break clickLoop
+            }
+
             count += 1
             onClick(id, count)
 
             if let limit = configuration.clickLimit, count >= limit {
-                finishedNaturally = true
-                break
+                result = .completed
+                break clickLoop
             }
 
             guard wait(
                 milliseconds: configuration.intervalMilliseconds,
                 whileRunIsActive: id
-            ) else { break }
+            ) else { break clickLoop }
         }
 
         condition.lock()
@@ -105,24 +132,36 @@ final class MouseClickEngine: @unchecked Sendable {
         }
         condition.unlock()
 
-        if finishedNaturally {
-            onFinished(id)
+        if let result {
+            onFinished(id, result)
         }
+    }
+
+    private enum ClickAttempt {
+        case posted
+        case stopped
+        case locationUnavailable
     }
 
     private func performClick(
         id: UUID,
-        configuration: ClickConfiguration,
-        location: CGPoint
-    ) -> Bool {
+        configuration: ClickConfiguration
+    ) -> ClickAttempt {
         let button: CGMouseButton = configuration.mouseButton == .left ? .left : .right
         let downType: CGEventType = configuration.mouseButton == .left ? .leftMouseDown : .rightMouseDown
         let upType: CGEventType = configuration.mouseButton == .left ? .leftMouseUp : .rightMouseUp
 
+        guard let location = locationProvider.currentLocation() else {
+            condition.lock()
+            let isActive = activeRunID == id
+            condition.unlock()
+            return isActive ? .locationUnavailable : .stopped
+        }
+
         condition.lock()
         guard activeRunID == id else {
             condition.unlock()
-            return false
+            return .stopped
         }
 
         poster.post(type: downType, button: button, at: location)
@@ -130,7 +169,7 @@ final class MouseClickEngine: @unchecked Sendable {
         if configuration.clickType == .single {
             poster.post(type: upType, button: button, at: location)
             condition.unlock()
-            return true
+            return .posted
         }
         condition.unlock()
 
@@ -140,8 +179,9 @@ final class MouseClickEngine: @unchecked Sendable {
         )
 
         // A mouse-down must always have a matching mouse-up, including when stopping mid-hold.
-        poster.post(type: upType, button: button, at: location)
-        return completedHold
+        let releaseLocation = locationProvider.currentLocation() ?? location
+        poster.post(type: upType, button: button, at: releaseLocation)
+        return completedHold ? .posted : .stopped
     }
 
     private func wait(milliseconds: Int, whileRunIsActive id: UUID) -> Bool {

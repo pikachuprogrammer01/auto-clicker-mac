@@ -35,7 +35,7 @@ codesign --verify --deep --strict --verbose=2 "dist/Auto Clicker.app"
 还应人工完成 PRD 中的 AC-01 至 AC-13，尤其检查：
 
 - Safari、Finder 等其他 App 位于前台时，全局快捷键仍可启停。
-- 任务启动后移动鼠标，点击位置不发生变化。
+- 任务启动后将鼠标从 X1 移到 X2，后续点击跟随到 X2。
 - 无限任务和长按任务均能立即停止。
 - 退出 App 后不再产生鼠标事件。
 - 撤销辅助功能权限后无法启动任务，并显示授权入口。
@@ -66,7 +66,7 @@ spctl --assess --type execute --verbose=4 "dist/Auto Clicker.app"
 先创建保留扩展属性的 ZIP：
 
 ```sh
-ditto -c -k --keepParent "dist/Auto Clicker.app" "dist/Auto-Clicker.zip"
+ditto -c -k --keepParent --norsrc --noextattr "dist/Auto Clicker.app" "dist/Auto-Clicker.zip"
 ```
 
 使用已配置在钥匙串中的 `notarytool` profile 提交：

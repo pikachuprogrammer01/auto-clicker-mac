@@ -5,8 +5,9 @@ import Foundation
 struct AutoClickerChecks {
     static func main() throws {
         try validateSettings()
-        try validateFiniteClickRun()
+        try validateCursorFollowingRun()
         try validateLongPressStop()
+        try validateLocationFailureStopsRun()
         print("All Auto Clicker checks passed.")
     }
 
@@ -45,11 +46,17 @@ struct AutoClickerChecks {
         }
     }
 
-    private static func validateFiniteClickRun() throws {
+    private static func validateCursorFollowingRun() throws {
         let poster = RecordingMouseEventPoster()
-        let engine = MouseClickEngine(poster: poster)
+        let locations = [
+            CGPoint(x: 100, y: 200),
+            CGPoint(x: 300, y: 400),
+            CGPoint(x: 500, y: 600)
+        ]
+        let locationProvider = SequenceMouseLocationProvider(locations)
+        let engine = MouseClickEngine(poster: poster, locationProvider: locationProvider)
         let finished = DispatchSemaphore(value: 0)
-        let location = CGPoint(x: 321, y: 654)
+        var finishResult: MouseClickEngineResult?
 
         engine.start(
             runID: UUID(),
@@ -60,15 +67,18 @@ struct AutoClickerChecks {
                 clickLimit: 3,
                 longPressMilliseconds: 500
             ),
-            location: location,
             onClick: { _, _ in },
-            onFinished: { _ in finished.signal() }
+            onFinished: { _, result in
+                finishResult = result
+                finished.signal()
+            }
         )
 
         try require(finished.wait(timeout: .now() + 1) == .success, "finite run did not finish")
         engine.stop()
 
         let events = poster.events
+        try require(finishResult == .completed, "finite run returned an unexpected result")
         try require(events.count == 6, "finite run posted \(events.count) events instead of 6")
         try require(
             events.map(\.type) == [
@@ -78,12 +88,18 @@ struct AutoClickerChecks {
             ],
             "finite run posted mouse events in the wrong order"
         )
-        try require(events.allSatisfy { $0.location == location }, "click position changed during a run")
+        try require(
+            events.map(\.location) == locations.flatMap { [$0, $0] },
+            "clicks did not follow the current mouse position"
+        )
     }
 
     private static func validateLongPressStop() throws {
         let poster = RecordingMouseEventPoster()
-        let engine = MouseClickEngine(poster: poster)
+        let pressLocation = CGPoint(x: 10, y: 20)
+        let releaseLocation = CGPoint(x: 30, y: 40)
+        let locationProvider = SequenceMouseLocationProvider([pressLocation, releaseLocation])
+        let engine = MouseClickEngine(poster: poster, locationProvider: locationProvider)
         let mouseDown = DispatchSemaphore(value: 0)
         poster.onPost = { event in
             if event.type == .rightMouseDown { mouseDown.signal() }
@@ -98,9 +114,8 @@ struct AutoClickerChecks {
                 clickLimit: nil,
                 longPressMilliseconds: 60_000
             ),
-            location: CGPoint(x: 10, y: 20),
             onClick: { _, _ in },
-            onFinished: { _ in }
+            onFinished: { _, _ in }
         )
 
         try require(mouseDown.wait(timeout: .now() + 1) == .success, "long press did not start")
@@ -112,6 +127,41 @@ struct AutoClickerChecks {
             poster.events.map(\.type) == [.rightMouseDown, .rightMouseUp],
             "stopping a long press did not release the mouse"
         )
+        try require(
+            poster.events.map(\.location) == [pressLocation, releaseLocation],
+            "long press release did not follow the current mouse position"
+        )
+    }
+
+    private static func validateLocationFailureStopsRun() throws {
+        let poster = RecordingMouseEventPoster()
+        let engine = MouseClickEngine(
+            poster: poster,
+            locationProvider: SequenceMouseLocationProvider([])
+        )
+        let finished = DispatchSemaphore(value: 0)
+        var finishResult: MouseClickEngineResult?
+
+        engine.start(
+            runID: UUID(),
+            configuration: ClickConfiguration(
+                mouseButton: .left,
+                clickType: .single,
+                intervalMilliseconds: 100,
+                clickLimit: nil,
+                longPressMilliseconds: 500
+            ),
+            onClick: { _, _ in },
+            onFinished: { _, result in
+                finishResult = result
+                finished.signal()
+            }
+        )
+
+        try require(finished.wait(timeout: .now() + 1) == .success, "location failure did not stop the run")
+        engine.stop()
+        try require(finishResult == .locationUnavailable, "location failure returned an unexpected result")
+        try require(poster.events.isEmpty, "location failure posted a mouse event")
     }
 
     private static func require(
@@ -119,6 +169,22 @@ struct AutoClickerChecks {
         _ message: @autoclosure () -> String
     ) throws {
         guard condition() else { throw CheckFailure(message()) }
+    }
+}
+
+private final class SequenceMouseLocationProvider: MouseLocationProviding {
+    private let lock = NSLock()
+    private var locations: [CGPoint]
+
+    init(_ locations: [CGPoint]) {
+        self.locations = locations
+    }
+
+    func currentLocation() -> CGPoint? {
+        lock.lock()
+        defer { lock.unlock() }
+        guard !locations.isEmpty else { return nil }
+        return locations.removeFirst()
     }
 }
 

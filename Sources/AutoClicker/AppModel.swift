@@ -116,11 +116,6 @@ final class AppModel: ObservableObject {
             return
         }
 
-        guard let location = CGEvent(source: nil)?.location else {
-            errorMessage = "无法读取当前鼠标位置。"
-            return
-        }
-
         settings.intervalMilliseconds = configuration.intervalMilliseconds
         if let clickLimit = configuration.clickLimit {
             settings.specifiedClickCount = clickLimit
@@ -137,18 +132,20 @@ final class AppModel: ObservableObject {
         clickEngine.start(
             runID: runID,
             configuration: configuration,
-            location: location,
             onClick: { [weak self] id, count in
                 DispatchQueue.main.async {
                     guard self?.activeRunID == id else { return }
                     self?.completedClicks = count
                 }
             },
-            onFinished: { [weak self] id in
+            onFinished: { [weak self] id, result in
                 DispatchQueue.main.async {
                     guard self?.activeRunID == id else { return }
                     self?.activeRunID = nil
                     self?.state = .stopped
+                    if result == .locationUnavailable {
+                        self?.errorMessage = "无法读取当前鼠标位置，任务已停止。"
+                    }
                 }
             }
         )

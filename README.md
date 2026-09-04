@@ -1,6 +1,6 @@
 # Auto Clicker for macOS
 
-Auto Clicker 是一款原生 SwiftUI 菜单栏连点工具。它在任务开始时锁定当前鼠标位置，并按照配置持续发送鼠标事件，不需要坐标输入、脚本、账号或网络服务。
+Auto Clicker 是一款原生 SwiftUI 菜单栏连点工具。它在每次操作前读取鼠标当前位置，点击会跟随鼠标移动，并按照配置持续发送鼠标事件，不需要坐标输入、脚本、账号或网络服务。
 
 ## 界面预览
 
@@ -16,14 +16,14 @@ Auto Clicker 是一款原生 SwiftUI 菜单栏连点工具。它在任务开始�
 - 单击或长按
 - `10～60000 ms` 点击间隔
 - 无限点击或指定点击次数
-- 启动时锁定鼠标位置
+- 点击位置实时跟随鼠标移动
 - 全局快捷键开始/停止，默认 `⌥⌘C`
 - 辅助功能权限检测与系统设置入口
 - 本地保存配置
 - 控制窗口与菜单栏 Popover
 - 停止或退出时可靠终止任务
 
-产品范围及验收标准见 [Auto_Clicker_PRD_v1.0.md](Auto_Clicker_PRD_v1.0.md)。
+产品范围及验收标准见 [Auto_Clicker_PRD_v1.1.md](Auto_Clicker_PRD_v1.1.md)。
 
 ## 系统要求
 
@@ -37,13 +37,17 @@ Auto Clicker 是一款原生 SwiftUI 菜单栏连点工具。它在任务开始�
 
 ### 1. 下载并打开
 
-前往 [Releases](https://github.com/pikachuprogrammer01/auto-clicker-mac/releases/latest)，下载 `Auto-Clicker-v1.0.0-arm64.zip`。解压后双击 `Auto Clicker.app`，应用会打开控制窗口并在菜单栏显示指针图标。
+前往 [Releases](https://github.com/pikachuprogrammer01/auto-clicker-mac/releases/latest)，下载 `Auto-Clicker-v1.1.0-arm64.zip`。解压后双击 `Auto Clicker.app`，应用会打开控制窗口并在菜单栏显示指针图标。
 
 当前发布附件适用于 Apple Silicon Mac。Intel Mac 可以按照下方开发说明从源码构建本机版本。
 
 ### 2. 授予辅助功能权限
 
 首次启动时，按系统提示打开“系统设置 → 隐私与安全性 → 辅助功能”，允许 Auto Clicker。返回应用后，右上角显示绿色“权限已开启”即表示可以发送鼠标事件；未授权时应用会禁用启动操作并提供“前往系统设置”按钮。
+
+<p align="center">
+  <img src="docs/images/permission-required.jpg" width="360" alt="Auto Clicker 未获得辅助功能权限时的界面">
+</p>
 
 ### 3. 配置点击任务
 
@@ -66,15 +70,11 @@ Auto Clicker 是一款原生 SwiftUI 菜单栏连点工具。它在任务开始�
 
 点击当前快捷键后，按钮会显示“请按新组合键”。按下包含 `⌘`、`⌥` 或 `⌃` 的组合键即可保存；按 `Esc` 取消。若组合键被其他应用占用，Auto Clicker 会恢复旧快捷键并提示重新设置。
 
-### 5. 锁定位置并开始
+### 5. 开始并跟随鼠标
 
-将鼠标移到需要重复点击的位置，然后按全局快捷键，默认是 `⌥⌘C`。应用会在快捷键触发瞬间读取并锁定鼠标位置，之后移动鼠标不会改变本次任务的点击目标。
+按全局快捷键开始任务，默认是 `⌥⌘C`。应用会在每次操作前读取鼠标当前位置；运行期间移动鼠标，后续点击会自动跟随到新的位置。
 
-<p align="center">
-  <img src="docs/images/running-state.jpg" width="360" alt="Auto Clicker 正在运行并显示锁定状态">
-</p>
-
-运行界面会显示已完成次数、位置锁定状态、当前鼠标操作和停止快捷键。再次按同一快捷键，或点击红色“停止点击”按钮，即可立即停止任务。
+运行界面会显示已完成次数、鼠标跟随状态、当前鼠标操作和停止快捷键。再次按同一快捷键，或点击红色“停止点击”按钮，即可立即停止任务。
 
 关闭控制窗口不会退出应用。需要完全退出时，点击面板右上角的电源按钮；应用会先停止当前任务，再结束进程。
 
@@ -104,7 +104,7 @@ swift run AutoClicker
 
 - 输入范围与非法值
 - 指定次数的事件数量和顺序
-- 一次任务中点击位置保持不变
+- 鼠标从 X1 移动到 X2 后，后续点击跟随到 X2
 - 长按中途停止时立即唤醒并补发 `mouseUp`
 
 ## 项目结构
@@ -118,7 +118,7 @@ scripts/run-checks.sh       核心逻辑检查入口
 docs/ARCHITECTURE.md        架构与线程模型
 docs/RELEASE.md             签名、公证与发布流程
 docs/images/                README 使用流程截图
-Auto_Clicker_PRD_v1.0.md    产品需求与验收标准
+Auto_Clicker_PRD_v1.1.md    产品需求与验收标准
 LICENSE                     MIT 许可证与免责声明
 ```
 
@@ -132,7 +132,7 @@ LICENSE                     MIT 许可证与免责声明
 
 - [架构说明](docs/ARCHITECTURE.md)
 - [构建与发布](docs/RELEASE.md)
-- [产品需求](Auto_Clicker_PRD_v1.0.md)
+- [产品需求](Auto_Clicker_PRD_v1.1.md)
 
 ## 当前边界
 

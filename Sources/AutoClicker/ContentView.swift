@@ -171,7 +171,7 @@ struct ContentView: View {
     private var runningSection: some View {
         VStack(spacing: 14) {
             summaryRow("点击次数", value: model.completedClicks.formatted())
-            summaryRow("点击位置", value: "已锁定")
+            summaryRow("点击位置", value: "跟随鼠标")
             summaryRow("鼠标操作", value: "\(settings.mouseButton.title) · \(settings.clickType.title)")
             summaryRow("快捷键", value: settings.hotKey.displayText)
         }

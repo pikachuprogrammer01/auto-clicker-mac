@@ -35,7 +35,7 @@ App 启动
   → 显示控制窗口并创建菜单栏入口
 ```
 
-启动点击任务时，`AppModel` 先完成全部输入校验和权限检查，再读取一次当前 `CGEvent.location`。这个位置与配置一起作为不可变快照交给 `MouseClickEngine`，所以任务执行期间移动鼠标不会改变目标位置。
+启动点击任务时，`AppModel` 先完成全部输入校验和权限检查，再将不可变配置交给 `MouseClickEngine`。引擎通过 `MouseLocationProviding` 在每次操作前读取当前 `CGEvent.location`，因此后续点击会跟随鼠标移动。
 
 ## 状态与线程模型
 
@@ -51,7 +51,8 @@ stopped → starting → running → stopping → stopped
 - 等待点击间隔或长按时间的工作线程会立即被唤醒。
 - `stop()` 等待当前工作项收尾后才返回。
 - 单击的 `mouseDown` 与 `mouseUp` 在同一个临界区发送。
-- 长按即使被中止，也会为已经发送的 `mouseDown` 补发 `mouseUp`。
+- 长按释放时再次读取鼠标位置；即使被中止，也会为已经发送的 `mouseDown` 补发 `mouseUp`。
+- 如果无法读取鼠标位置，引擎不会发送事件，并自动结束任务。
 
 这些约束保证 `stop()` 返回后不会再产生新的点击，并避免鼠标停留在按下状态。
 
@@ -76,4 +77,4 @@ stopped → starting → running → stopping → stopped
 
 ## 测试边界
 
-`Checks/AutoClickerChecks.swift` 通过注入 `MouseEventPosting` 测试引擎，不会向桌面发送真实鼠标事件。辅助功能授权、系统快捷键占用和真实目标应用中的点击行为仍需要在 macOS 上进行人工验收。
+`Checks/AutoClickerChecks.swift` 通过注入 `MouseEventPosting` 和 `MouseLocationProviding` 测试引擎，不会向桌面发送真实鼠标事件。检查覆盖逐次位置跟随、长按移动后释放、位置读取失败和同步停止。辅助功能授权、系统快捷键占用和真实目标应用中的点击行为仍需要在 macOS 上进行人工验收。
