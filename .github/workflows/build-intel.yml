@@ -1,0 +1,102 @@
+name: Build Intel macOS app
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Optional existing or new release tag to attach the Intel package to
+        required: false
+        type: string
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-intel:
+    # macos-13 is the Intel GitHub-hosted runner. Building natively avoids
+    # accidentally shipping an arm64 binary from an Apple Silicon host.
+    runs-on: macos-13
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Run core checks
+        run: ./scripts/run-checks.sh
+
+      - name: Build Intel app
+        run: ./scripts/build-app.sh
+
+      - name: Package and verify Intel app
+        id: package
+        shell: bash
+        env:
+          RELEASE_TAG_INPUT: ${{ inputs.release_tag }}
+        run: |
+          set -euo pipefail
+
+          app_path="dist/Auto Clicker.app"
+          version="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$app_path/Contents/Info.plist")"
+          binary_path="$app_path/Contents/MacOS/AutoClicker"
+          architecture="$(file -b "$binary_path")"
+
+          echo "$architecture"
+          grep -q 'Mach-O 64-bit executable x86_64' <<< "$architecture"
+
+          if [[ "${GITHUB_REF_TYPE:-}" == "tag" && "${GITHUB_REF_NAME:-}" != "v${version}" ]]; then
+            echo "Tag ${GITHUB_REF_NAME} does not match app version v${version}." >&2
+            exit 1
+          fi
+
+          package_path="dist/Auto-Clicker-v${version}-intel.zip"
+          checksum_path="${package_path}.sha256"
+          ditto -c -k --keepParent --norsrc --noextattr "$app_path" "$package_path"
+          shasum -a 256 "$package_path" > "$checksum_path"
+
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "package_path=$package_path" >> "$GITHUB_OUTPUT"
+          echo "checksum_path=$checksum_path" >> "$GITHUB_OUTPUT"
+
+          unzip -l "$package_path"
+          ditto -x -k "$package_path" "$RUNNER_TEMP/intel-package"
+          codesign --verify --deep --strict "$RUNNER_TEMP/intel-package/$app_path"
+
+      - name: Upload Intel package artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: auto-clicker-v${{ steps.package.outputs.version }}-intel
+          path: |
+            ${{ steps.package.outputs.package_path }}
+            ${{ steps.package.outputs.checksum_path }}
+          if-no-files-found: error
+
+      - name: Publish Intel package to GitHub Release
+        if: ${{ github.event_name == 'push' || inputs.release_tag != '' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG_INPUT: ${{ inputs.release_tag }}
+          PACKAGE_PATH: ${{ steps.package.outputs.package_path }}
+          CHECKSUM_PATH: ${{ steps.package.outputs.checksum_path }}
+        run: |
+          set -euo pipefail
+          release_tag="${RELEASE_TAG_INPUT:-${GITHUB_REF_NAME:-}}"
+          if [[ -z "$release_tag" ]]; then
+            echo "release_tag is required when publishing a manually triggered build." >&2
+            exit 1
+          fi
+
+          if ! gh release view "$release_tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release create "$release_tag" \
+              --repo "$GITHUB_REPOSITORY" \
+              --title "Auto Clicker $release_tag" \
+              --generate-notes
+          fi
+
+          gh release upload "$release_tag" \
+            "$PACKAGE_PATH" \
+            "$CHECKSUM_PATH" \
+            --repo "$GITHUB_REPOSITORY" \
+            --clobber

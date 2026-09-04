@@ -25,6 +25,16 @@ dist/Auto Clicker.app
 
 ad-hoc 签名只适合本机开发测试，不适合向其他用户分发。脚本构建当前 Mac 的原生架构；通用二进制需要分别构建 `arm64` 和 `x86_64` 后使用 `lipo` 合并。
 
+## GitHub Actions Intel 包
+
+`.github/workflows/build-intel.yml` 使用 `macos-13` Intel runner 原生构建 `x86_64` 安装包。工作流会运行核心检查、构建 App、校验 Mach-O 架构、生成 ZIP 和 SHA-256，并上传 Actions artifact。
+
+- 推送 `v*` 标签：自动构建并将 Intel ZIP 上传到对应的正式 GitHub Release。
+- 手动运行 workflow：不填写 `release_tag` 时只生成 Actions artifact；填写已有或新的标签时，同时上传到该 Release。
+- 产物命名：`Auto-Clicker-v<版本>-intel.zip` 和同名 `.sha256`。
+
+发布前应确认 GitHub Actions 日志中的架构检查显示 `Mach-O 64-bit executable x86_64`。
+
 ## 发布前检查
 
 ```sh
