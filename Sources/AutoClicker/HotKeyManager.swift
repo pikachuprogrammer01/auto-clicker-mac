@@ -3,9 +3,9 @@ import AppKit
 
 extension HotKey {
     static let defaultValue = HotKey(
-        keyCode: UInt32(kVK_ANSI_C),
+        keyCode: UInt32(kVK_ANSI_A),
         modifiers: UInt32(optionKey | cmdKey),
-        keyLabel: "C"
+        keyLabel: "A"
     )
 
     var displayText: String {

@@ -154,6 +154,7 @@ struct ContentView: View {
                 }
                 .buttonStyle(.bordered)
                 .frame(width: 168)
+                .help(model.isRecordingHotKey ? "按 Esc 取消录入" : "点击后按下新的快捷键")
                 .overlay {
                     HotKeyRecorder(
                         isRecording: model.isRecordingHotKey,
@@ -237,6 +238,10 @@ struct ContentView: View {
                     .textFieldStyle(.roundedBorder)
                     .multilineTextAlignment(.trailing)
                     .frame(width: 116)
+                    .onChange(of: text.wrappedValue) { _, value in
+                        let filtered = value.filter { $0.isNumber }
+                        if filtered != value { text.wrappedValue = filtered }
+                    }
                 Text(suffix)
                     .foregroundStyle(.secondary)
                     .frame(width: 36, alignment: .leading)
