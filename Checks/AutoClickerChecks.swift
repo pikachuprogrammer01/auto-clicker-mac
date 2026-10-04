@@ -1,3 +1,4 @@
+import AppKit
 import ApplicationServices
 import Foundation
 
@@ -8,6 +9,7 @@ struct AutoClickerChecks {
         try validateCursorFollowingRun()
         try validateLongPressStop()
         try validateLocationFailureStopsRun()
+        try validateBrandAssets()
         print("All Auto Clicker checks passed.")
     }
 
@@ -162,6 +164,41 @@ struct AutoClickerChecks {
         engine.stop()
         try require(finishResult == .locationUnavailable, "location failure returned an unexpected result")
         try require(poster.events.isEmpty, "location failure posted a mouse event")
+    }
+
+    /// The app icon and menu bar marks are generated into `Support/Resources` and copied
+    /// into the bundle at build time, so a missing or stale file silently degrades to the
+    /// system placeholder icon.
+    private static func validateBrandAssets() throws {
+        let resourcesDirectory = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .appendingPathComponent("Support/Resources", isDirectory: true)
+
+        let expectedSizes: [String: (width: Int, height: Int)] = [
+            "menu-bar-idle.png": (16, 16),
+            "menu-bar-idle@2x.png": (32, 32),
+            "menu-bar-running.png": (20, 16),
+            "menu-bar-running@2x.png": (40, 32),
+            "brand-mark.png": (22, 22),
+            "brand-mark@2x.png": (44, 44)
+        ]
+
+        for name in ["AppIcon.icns"] + expectedSizes.keys.sorted() {
+            let url = resourcesDirectory.appendingPathComponent(name)
+            guard let data = try? Data(contentsOf: url) else {
+                throw CheckFailure("missing brand asset Support/Resources/\(name); run `swift scripts/make-brand-assets.swift`")
+            }
+            try require(!data.isEmpty, "brand asset Support/Resources/\(name) is empty")
+            guard let expected = expectedSizes[name] else { continue }
+            guard let bitmap = NSBitmapImageRep(data: data) else {
+                throw CheckFailure("brand asset Support/Resources/\(name) cannot be decoded")
+            }
+            try require(
+                bitmap.pixelsWide == expected.width && bitmap.pixelsHigh == expected.height,
+                "brand asset Support/Resources/\(name) is \(bitmap.pixelsWide)x\(bitmap.pixelsHigh), expected \(expected.width)x\(expected.height)"
+            )
+        }
     }
 
     private static func require(

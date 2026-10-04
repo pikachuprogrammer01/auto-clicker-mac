@@ -41,6 +41,7 @@ fi
 /bin/cp "$binary_directory/AutoClicker" "$app_path/Contents/MacOS/AutoClicker"
 /bin/cp "$project_directory/Support/Info.plist" "$app_path/Contents/Info.plist"
 /bin/cp "$project_directory/LICENSE" "$app_path/Contents/Resources/LICENSE"
+/bin/cp "$project_directory"/Support/Resources/* "$app_path/Contents/Resources/"
 /usr/bin/codesign --force --sign - --timestamp=none "$app_path"
 
 print "Built: $app_path"

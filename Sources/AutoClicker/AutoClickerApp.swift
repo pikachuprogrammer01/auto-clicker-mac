@@ -54,7 +54,7 @@ struct AutoClickerApp: App {
                 NSApplication.shared.terminate(nil)
             }
         } label: {
-            Label("Auto Clicker", systemImage: model.state.isRunning ? "cursorarrow.click.2" : "cursorarrow")
+            Image(nsImage: Brand.menuBarIcon(running: model.state.isRunning))
         }
         .menuBarExtraStyle(.menu)
     }

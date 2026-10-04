@@ -37,14 +37,17 @@ struct ContentView: View {
         }
         .frame(width: 360)
         .fixedSize(horizontal: false, vertical: true)
+        .tint(Brand.accent)
         .onAppear { model.activate() }
     }
 
     private var header: some View {
         HStack(spacing: 9) {
-            Image(systemName: "cursorarrow.click.2")
-                .font(.system(size: 17, weight: .semibold))
-                .foregroundStyle(.tint)
+            Image(nsImage: Brand.controlPanelMark())
+                .resizable()
+                .interpolation(.high)
+                .frame(width: 22, height: 22)
+                .accessibilityHidden(true)
 
             Text("Auto Clicker")
                 .font(.headline)
@@ -202,7 +205,7 @@ struct ContentView: View {
                 .frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)
-            .tint(model.state.isRunning ? .red : .accentColor)
+            .tint(model.state.isRunning ? .red : Brand.accent)
             .controlSize(.large)
             .disabled(model.state == .starting || model.state == .stopping || !model.hasAccessibilityPermission)
             .keyboardShortcut(.return, modifiers: [])

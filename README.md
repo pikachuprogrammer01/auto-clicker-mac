@@ -1,5 +1,9 @@
 # Auto Clicker for macOS
 
+<p align="center">
+  <img src="docs/images/app-icon.png" width="112" alt="Auto Clicker 应用图标">
+</p>
+
 Auto Clicker 是一款原生 SwiftUI 菜单栏连点工具。它在每次操作前读取鼠标当前位置，点击会跟随鼠标移动，并按照配置持续发送鼠标事件，不需要坐标输入、脚本、账号或网络服务。
 
 ## 界面预览
@@ -8,7 +12,7 @@ Auto Clicker 是一款原生 SwiftUI 菜单栏连点工具。它在每次操作�
   <img src="docs/images/app-overview.jpg" width="360" alt="Auto Clicker 默认控制面板">
 </p>
 
-控制面板集中展示权限、鼠标按键、点击类型、间隔、次数和全局快捷键。应用窗口关闭后仍会驻留菜单栏，需要时可从菜单栏指针图标重新打开。
+控制面板集中展示权限、鼠标按键、点击类型、间隔、次数和全局快捷键。应用窗口关闭后仍会驻留菜单栏，需要时可从菜单栏的品牌图标重新打开；图标右上角出现圆点表示正在点击。
 
 ## 功能
 
@@ -37,7 +41,7 @@ Auto Clicker 是一款原生 SwiftUI 菜单栏连点工具。它在每次操作�
 
 ### 1. 下载并打开
 
-前往 [Releases](https://github.com/pikachuprogrammer01/auto-clicker-mac/releases/latest)，按芯片架构下载对应安装包：Apple Silicon 使用 `arm64`，Intel Mac 使用 `intel`。例如 v1.1.0 的 Intel 包为 `Auto-Clicker-v1.1.0-intel.zip`。解压后双击 `Auto Clicker.app`，应用会打开控制窗口并在菜单栏显示指针图标。
+前往 [Releases](https://github.com/pikachuprogrammer01/auto-clicker-mac/releases/latest)，按芯片架构下载对应安装包：Apple Silicon 使用 `arm64`，Intel Mac 使用 `intel`。例如 v1.1.0 的 Intel 包为 `Auto-Clicker-v1.1.0-intel.zip`。解压后双击 `Auto Clicker.app`，应用会打开控制窗口并在菜单栏显示品牌图标。
 
 Intel 安装包由 GitHub Actions 的 `macos-15-intel` runner 构建；每个 ZIP 都附带同名 `.sha256` 校验文件。
 
@@ -94,6 +98,12 @@ swift run AutoClicker
 
 产物位于 `dist/Auto Clicker.app`。脚本执行 Release 构建、组装 Bundle，并使用 ad-hoc 签名供本机开发测试。
 
+应用图标、菜单栏图标和界面图形标由设计资源包生成到 `Support/Resources/`，构建时一并拷进 Bundle。设计稿更新后重新生成：
+
+```sh
+swift scripts/make-brand-assets.swift
+```
+
 运行核心检查：
 
 ```sh
@@ -106,6 +116,7 @@ swift run AutoClicker
 - 指定次数的事件数量和顺序
 - 鼠标从 X1 移动到 X2 后，后续点击跟随到 X2
 - 长按中途停止时立即唤醒并补发 `mouseUp`
+- 品牌资源是否已生成且尺寸正确
 
 ## 项目结构
 
@@ -113,12 +124,15 @@ swift run AutoClicker
 Sources/AutoClicker/        应用、UI、快捷键、权限、配置与点击引擎
 Checks/                     不发送真实鼠标事件的核心检查
 Support/Info.plist          App Bundle 元数据
+Support/Resources/          生成后的应用图标、菜单栏与界面品牌资源
+Auto_Clicker_Logo_PNG_Pack/ 设计资源包，品牌图标源文件
 scripts/build-app.sh        Release 构建及 Bundle 组装
+scripts/make-brand-assets.swift  从设计资源包生成品牌资源
 scripts/run-checks.sh       核心逻辑检查入口
 .github/workflows/          GitHub Actions 构建与发布流程
 docs/ARCHITECTURE.md        架构与线程模型
 docs/RELEASE.md             签名、公证与发布流程
-docs/images/                README 使用流程截图
+docs/images/                README 使用流程截图与图标
 Auto_Clicker_PRD_v1.1.md    产品需求与验收标准
 LICENSE                     MIT 许可证与免责声明
 ```
