@@ -1,7 +1,7 @@
 # Auto Clicker for macOS
 
 <p align="center">
-  <img src="docs/images/app-icon.png" width="112" alt="Auto Clicker 应用图标">
+  <img src="docs/images/brand-lockup.png" width="420" alt="Auto Clicker 品牌标识">
 </p>
 
 Auto Clicker 是一款原生 SwiftUI 菜单栏连点工具。它在每次操作前读取鼠标当前位置，点击会跟随鼠标移动，并按照配置持续发送鼠标事件，不需要坐标输入、脚本、账号或网络服务。
@@ -132,7 +132,7 @@ scripts/run-checks.sh       核心逻辑检查入口
 .github/workflows/          GitHub Actions 构建与发布流程
 docs/ARCHITECTURE.md        架构与线程模型
 docs/RELEASE.md             签名、公证与发布流程
-docs/images/                README 使用流程截图与图标
+docs/images/                README 使用流程截图与品牌标识
 Auto_Clicker_PRD_v1.1.md    产品需求与验收标准
 LICENSE                     MIT 许可证与免责声明
 ```

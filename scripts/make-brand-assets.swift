@@ -108,11 +108,15 @@ func writePNG(_ rep: NSBitmapImageRep, to url: URL) {
     print("  wrote \(url.path(percentEncoded: false)) (\(rep.pixelsWide)x\(rep.pixelsHigh))")
 }
 
-func drawSource(_ source: NSImage, in rect: NSRect) {
+func drawSource(
+    _ source: NSImage,
+    in rect: NSRect,
+    operation: NSCompositingOperation = .copy
+) {
     source.draw(
         in: rect,
         from: NSRect(origin: .zero, size: source.size),
-        operation: .copy,
+        operation: operation,
         fraction: 1,
         respectFlipped: true,
         hints: [.interpolation: NSImageInterpolation.high.rawValue]
@@ -184,6 +188,40 @@ func renderBrandMark(canvas: Int, source: NSImage) -> NSBitmapImageRep {
     return rep
 }
 
+/// The lockup's wordmark is near-black, so it disappears on GitHub's dark theme.
+/// Sitting it on the brand's interface background keeps one asset readable in both.
+func renderBrandPlate(source: NSImage, targetWidth: Int) -> NSBitmapImageRep {
+    let padding = source.size.height * 0.10
+    let plateWidth = source.size.width + padding * 2
+    let scale = CGFloat(targetWidth) / plateWidth
+    let canvas = NSSize(
+        width: CGFloat(targetWidth),
+        height: ((source.size.height + padding * 2) * scale).rounded()
+    )
+    let rep = makeCanvas(Int(canvas.width), Int(canvas.height))
+    let radius = canvas.height * 0.12
+    draw(into: rep) { size in
+        NSGraphicsContext.current?.imageInterpolation = .high
+        NSColor(srgbRed: 247.0 / 255.0, green: 245.0 / 255.0, blue: 242.0 / 255.0, alpha: 1).setFill()
+        NSBezierPath(
+            roundedRect: NSRect(origin: .zero, size: size),
+            xRadius: radius,
+            yRadius: radius
+        ).fill()
+        drawSource(
+            source,
+            in: NSRect(
+                x: padding * scale,
+                y: (size.height - source.size.height * scale) / 2,
+                width: size.width - padding * scale * 2,
+                height: source.size.height * scale
+            ),
+            operation: .sourceOver
+        )
+    }
+    return rep
+}
+
 let appIconSource = image(from: loadBitmap(packDirectory.appendingPathComponent("01_app_icon_color_1024.png")))
 let brandMarkSource = image(from: loadBitmap(packDirectory.appendingPathComponent("02_symbol_color_transparent_1024.png")))
 // The pack ships the menu bar mark pre-rendered at each size; using those pixels
@@ -249,7 +287,8 @@ writePNG(renderBrandMark(canvas: 22, source: brandMarkSource), to: resourcesDire
 writePNG(renderBrandMark(canvas: 44, source: brandMarkSource), to: resourcesDirectory.appendingPathComponent("brand-mark@2x.png"))
 
 print("README artwork")
+let lockupSource = image(from: loadBitmap(packDirectory.appendingPathComponent("07_logo_lockup_transparent.png")))
 writePNG(
-    renderAppIcon(canvas: 256, source: appIconSource),
-    to: projectDirectory.appendingPathComponent("docs/images/app-icon.png")
+    renderBrandPlate(source: lockupSource, targetWidth: 960),
+    to: projectDirectory.appendingPathComponent("docs/images/brand-lockup.png")
 )
