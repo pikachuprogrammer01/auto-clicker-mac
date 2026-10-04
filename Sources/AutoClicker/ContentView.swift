@@ -241,7 +241,7 @@ struct ContentView: View {
                     .textFieldStyle(.roundedBorder)
                     .multilineTextAlignment(.trailing)
                     .frame(width: 116)
-                    .onChange(of: text.wrappedValue) { _, value in
+                    .onChange(of: text.wrappedValue) { value in
                         let filtered = value.filter { $0.isNumber }
                         if filtered != value { text.wrappedValue = filtered }
                     }
