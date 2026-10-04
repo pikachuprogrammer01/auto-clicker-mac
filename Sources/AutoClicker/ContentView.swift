@@ -39,6 +39,20 @@ struct ContentView: View {
         .fixedSize(horizontal: false, vertical: true)
         .tint(Brand.accent)
         .onAppear { model.activate() }
+        .onReceive(
+            NotificationCenter.default.publisher(
+                for: NSApplication.didBecomeActiveNotification
+            )
+        ) { _ in
+            model.refreshPermission()
+        }
+        .onReceive(
+            NotificationCenter.default.publisher(
+                for: NSWindow.didBecomeKeyNotification
+            )
+        ) { _ in
+            model.refreshPermission()
+        }
     }
 
     private var header: some View {

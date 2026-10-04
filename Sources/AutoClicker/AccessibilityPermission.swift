@@ -10,9 +10,13 @@ enum AccessibilityPermission {
     }
 
     static func openSystemSettings() {
-        guard let url = URL(
-            string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility"
-        ) else { return }
-        NSWorkspace.shared.open(url)
+        let urls = [
+            "x-apple.systempreferences:com.apple.settings.PrivacySecurity.extension?Privacy_Accessibility",
+            "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility"
+        ].compactMap(URL.init(string:))
+
+        for url in urls where NSWorkspace.shared.open(url) {
+            break
+        }
     }
 }
